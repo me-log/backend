@@ -39,17 +39,16 @@ public class JwtTokenProvider {
         long now = (new Date()).getTime();
 
         //create Access Token
-        Date accessTokenExpire = new Date(now+1000*30);
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
-                .setExpiration(accessTokenExpire)
+                .setExpiration(new Date(now+1000*60)) //1min
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
         //create Refresh Token
         String refreshToken = Jwts.builder()
-                .setExpiration(new Date(now+1000*30))
+                .setExpiration(new Date(now+1000*60*60*3)) //3hrs
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
