@@ -8,7 +8,10 @@ import org.springframework.web.server.ResponseStatusException;
 import songdiary.melog.dto.SongDTO;
 import songdiary.melog.service.DiaryService;
 import songdiary.melog.service.SongService;
+import songdiary.melog.user.SecurityUtil;
+import songdiary.melog.user.entity.Member;
 import songdiary.melog.user.jwt.JwtTokenProvider;
+import songdiary.melog.user.repository.MemberRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,18 +24,12 @@ public class SongController {
     private final SongService songService;
     private final DiaryService diaryService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberRepository memberRepository;
     @PostMapping()
-    public ResponseEntity<?> createSong(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId, @RequestBody List<SongDTO> reqs){
-        Long userId;
-        try {
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                userId = jwtTokenProvider.getMemberIdFromToken(token);
-            } else {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<?> createSong(@PathVariable("diaryId") Long diaryId, @RequestBody List<SongDTO> reqs){
+        String username = SecurityUtil.getCurrentUsername();
+        Optional<Member> member = memberRepository.findByUsername(username);
+        Long userId = member.get().getId();
 
         try {
             songService.createSongs(diaryId, reqs);
@@ -42,17 +39,10 @@ public class SongController {
         }
     }
     @GetMapping()
-    public ResponseEntity<?> findEmotion(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId) {
-        Long userId;
-        try {
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                userId = jwtTokenProvider.getMemberIdFromToken(token);
-            } else {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<?> findEmotion(@PathVariable("diaryId") Long diaryId) {
+        String username = SecurityUtil.getCurrentUsername();
+        Optional<Member> member = memberRepository.findByUsername(username);
+        Long userId = member.get().getId();
 
         try {
             List<SongDTO> songs = songService.findSongsByDiaryId(diaryId);
@@ -62,17 +52,10 @@ public class SongController {
         }
     }
     @DeleteMapping()
-    public ResponseEntity<?> deleteSong(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId) {
-        Long userId;
-        try {
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                userId = jwtTokenProvider.getMemberIdFromToken(token);
-            } else {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<?> deleteSong(@PathVariable("diaryId") Long diaryId) {
+        String username = SecurityUtil.getCurrentUsername();
+        Optional<Member> member = memberRepository.findByUsername(username);
+        Long userId = member.get().getId();
 
         try {
             songService.deleteSongs(diaryId);

@@ -3,6 +3,7 @@ package songdiary.melog.controller;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -15,7 +16,11 @@ import songdiary.melog.dto.DiaryRequestDTO;
 import songdiary.melog.dto.DiaryResponseDTO;
 import songdiary.melog.entity.Diary;
 import songdiary.melog.service.DiaryService;
+import songdiary.melog.user.SecurityUtil;
+import songdiary.melog.user.entity.Member;
 import songdiary.melog.user.jwt.JwtTokenProvider;
+import songdiary.melog.user.repository.MemberRepository;
+import songdiary.melog.user.service.MemberService;
 
 
 @RestController
@@ -24,20 +29,14 @@ import songdiary.melog.user.jwt.JwtTokenProvider;
 public class DiaryController {
   
   private final DiaryService diaryService;
+  private final MemberRepository memberRepository;
   private final JwtTokenProvider jwtTokenProvider;
 
   @PostMapping("/diary")
-  public ResponseEntity<?> createDiary(@RequestHeader(name="Authorization") String token, @RequestBody DiaryRequestDTO req){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> createDiary(@RequestBody DiaryRequestDTO req){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
     
     Diary diary = new Diary();
     diary.setDiaryWriterId(userId);
@@ -54,17 +53,10 @@ public class DiaryController {
   }
 
   @GetMapping("/diary")
-  public ResponseEntity<?> getDiaryByDate(@RequestHeader(name="Authorization") String token, @RequestParam(name="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> getDiaryByDate(@RequestParam(name="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     LocalDate diaryDate = (date == null)?LocalDate.now():date;
     try {
@@ -75,17 +67,10 @@ public class DiaryController {
     }
   }
   @GetMapping("/diary/emotion")
-  public ResponseEntity<?> getEmotionByDate(@RequestHeader(name="Authorization") String token, @RequestParam(name="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) YearMonth date){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> getEmotionByDate(@RequestParam(name="date", required=false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) YearMonth date){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     YearMonth diaryDate = (date == null)? YearMonth.from(LocalDate.now()):date;
     try {
@@ -96,17 +81,10 @@ public class DiaryController {
     }
   }
   @GetMapping("/main")
-  public ResponseEntity<?> getMainDiary(@RequestHeader(name="Authorization") String token){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> getMainDiary(){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       List<DiaryResponseDTO> res = diaryService.findDiariesByUser(userId);
@@ -116,17 +94,10 @@ public class DiaryController {
     }
   }
   @GetMapping("/diary/{diaryId}")
-  public ResponseEntity<?> getDiary(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> getDiary(@PathVariable("diaryId") Long diaryId){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       DiaryResponseDTO res = diaryService.findDiaryById(diaryId);
@@ -136,17 +107,10 @@ public class DiaryController {
     }
   }
   @DeleteMapping("/diary/{diaryId}")
-  public ResponseEntity<?> deleteDiary(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> deleteDiary(@PathVariable("diaryId") Long diaryId){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       diaryService.deleteDiary(diaryId);

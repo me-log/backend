@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import songdiary.melog.dto.EmotionDTO;
 import songdiary.melog.service.EmotionService;
+import songdiary.melog.user.SecurityUtil;
+import songdiary.melog.user.entity.Member;
 import songdiary.melog.user.jwt.JwtTokenProvider;
+import songdiary.melog.user.repository.MemberRepository;
 
 
 @RestController
@@ -22,19 +25,12 @@ public class EmotionController {
 
   private final EmotionService emotionService;
   private final JwtTokenProvider jwtTokenProvider;
-
+  private final MemberRepository memberRepository;
   @PostMapping("")
-  public ResponseEntity<?> createEmotion(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId, @RequestBody EmotionDTO req) {
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> createEmotion(@PathVariable("diaryId") Long diaryId, @RequestBody EmotionDTO req) {
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     if (req == null) {
       return new ResponseEntity<>("분석이 정상적으로 수행되지 않았습니다. 다시 시도해주세요.", HttpStatus.NOT_FOUND);
@@ -49,17 +45,10 @@ public class EmotionController {
   }
 
   @GetMapping("")
-  public ResponseEntity<?> findEmotion(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId) {
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> findEmotion(@PathVariable("diaryId") Long diaryId) {
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       Optional<EmotionDTO> emotion = emotionService.findEmotionByDiaryId(diaryId);
@@ -70,17 +59,10 @@ public class EmotionController {
   }
 
   @DeleteMapping("")
-  public ResponseEntity<?> deleteEmotion(@RequestHeader(name="Authorization") String token, @PathVariable("diaryId") Long diaryId) {
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> deleteEmotion(@PathVariable("diaryId") Long diaryId) {
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       emotionService.deleteEmotion(diaryId);
@@ -92,17 +74,10 @@ public class EmotionController {
   
   //감정 분석
   @PostMapping("/analyze")
-  public ResponseEntity<?> textAnalyze(@RequestHeader(name="Authorization") String token, @RequestBody String contents){
-    Long userId;
-    try {
-      if (token != null && jwtTokenProvider.validateToken(token)) {
-        userId = jwtTokenProvider.getMemberIdFromToken(token);
-      } else {
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
-      }
-    } catch (Exception e) {
-      return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
+  public ResponseEntity<?> textAnalyze(@RequestBody String contents){
+    String username = SecurityUtil.getCurrentUsername();
+    Optional<Member> member = memberRepository.findByUsername(username);
+    Long userId = member.get().getId();
 
     try {
       Optional<EmotionDTO> emotion =  emotionService.analyzeEmotion(contents);
